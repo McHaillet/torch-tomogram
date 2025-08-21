@@ -19,7 +19,7 @@ name = "torch-tomogram"
 dynamic = ["version"]
 description = "Tomogram reconstruction, subtomogram reconstruction, and subtilt extraction for cryo-ET."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "==3.11"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Marten Chaillet", email = "martenchaillet@gmail.com" },
@@ -38,11 +38,12 @@ classifiers = [
 dependencies = [
     "numpy",
     "einops",
-    "torch",
+    "torch==2.6",
     "torch-fourier-slice",
     "torch-grid-utils>=0.0.8",
     "torch-affine-utils",
     "torch-subpixel-crop",
+    "torch-projectors @ torch_projectors-0.10.0+cpu-cp311-cp311-manylinux_2_28_x86_64.whl"
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
