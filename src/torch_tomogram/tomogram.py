@@ -9,6 +9,8 @@ from torch_fourier_slice import backproject_2d_to_3d
 from torch_grid_utils import dft_center
 from torch_subpixel_crop import subpixel_crop_2d
 
+from .utils import _backproject_2d_to_3d
+
 
 class Tomogram:
     """Tomogram class that enables reconstruction position querying."""
@@ -92,15 +94,11 @@ class Tomogram:
         particle_tilt_series = self.extract_particle_tilt_series(
             point_zyx, sidelength=sidelength_padded
         )
-        volume = backproject_2d_to_3d(
-            images=particle_tilt_series[0],
-            rotation_matrices=rotation_matrices,
-            zyx_matrices=True,
-            pad_factor=1.0,  # we already incorporate padding in subtilts
-            fftfreq_max=0.5,
+        volume = _backproject_2d_to_3d(
+            particle_tilt_series,  # already has a batch dimensions
+            rotation_matrices,
+            pad_factor=self._pad_factor,
         )
-        p = (sidelength_padded - sidelength) // 2
-        volume = F.pad(volume, [-p] * 6)  # remove padding
         return volume
 
     def reconstruct_tomogram(
