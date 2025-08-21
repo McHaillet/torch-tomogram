@@ -7,6 +7,9 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 # read more about configuring hatch at:
 # https://hatch.pypa.io/latest/config/build/
 [tool.hatch.build.targets.wheel]
@@ -19,7 +22,7 @@ name = "torch-tomogram"
 dynamic = ["version"]
 description = "Tomogram reconstruction, subtomogram reconstruction, and subtilt extraction for cryo-ET."
 readme = "README.md"
-requires-python = "==3.11"
+requires-python = ">=3.11"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Marten Chaillet", email = "martenchaillet@gmail.com" },
@@ -43,7 +46,7 @@ dependencies = [
     "torch-grid-utils>=0.0.8",
     "torch-affine-utils",
     "torch-subpixel-crop",
-    "torch-projectors @ torch_projectors-0.10.0+cpu-cp311-cp311-manylinux_2_28_x86_64.whl"
+    "torch-projectors @ https://warpem.github.io/torch-projectors/cpu/packages/torch_projectors-0.10.0+cpu-cp311-cp311-manylinux_2_28_x86_64.whl"
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
