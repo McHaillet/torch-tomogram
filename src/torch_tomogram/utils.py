@@ -22,6 +22,9 @@ def _backproject_2d_to_3d(
     # 1. fftshift and convert to Fourier space
     shifted_projection = torch.fft.fftshift(real_projections, dim=(-2, -1))
     fourier_projection = torch.fft.rfft2(shifted_projection, norm='forward')
+    weights = torch.ones_like(
+        fourier_projection, dtype=torch.float32, device=fourier_projection.device
+    )
 
     # 2. Set up backprojection parameters (rotation matrix for 3D)
     rotations = torch.flip(rotations, dims=(-2, -1))  # zyx > xyz matrix
@@ -29,13 +32,17 @@ def _backproject_2d_to_3d(
     shifts = torch.zeros(1, n_tilts, 2, dtype=torch.float32)
 
     # 3. Backward project 2D->3D with oversampling=2.0
-    data_rec, _ = torch_projectors.backproject_2d_to_3d_forw(
+    data_rec, weight_rec = torch_projectors.backproject_2d_to_3d_forw(
         fourier_projection,  # Add batch dimensions
         rotations,
+        weights=weights,
         shifts=shifts,
         interpolation='linear',
         oversampling=1.0
     )
+
+    valid = weight_rec > 1e-3
+    data_rec[valid] /= weight_rec[valid]
 
     # 4. Convert reconstruction to real space
     real_reconstruction = torch.fft.irfftn(data_rec[0], dim=(-3, -2, -1), norm='forward')
