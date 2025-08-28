@@ -1,15 +1,16 @@
 import torch
 import torch_projectors
+from torch_grid_utils import fftfreq_grid
 
 # Helper function to crop 3D volumes
-def _ifftshift_and_crop_3d(real_tensor, oversampling_factor):
-    shifted = torch.fft.ifftshift(real_tensor, dim=(-3, -2, -1))
+def _crop_3d(real_tensor, oversampling_factor):
     current_size = real_tensor.shape[-3]
     original_size = int(current_size / oversampling_factor)
     crop_total = current_size - original_size
     crop_start = crop_total // 2
     crop_end = crop_start + original_size
-    return shifted[..., crop_start:crop_end, crop_start:crop_end, crop_start:crop_end]
+    return real_tensor[..., crop_start:crop_end, crop_start:crop_end,
+    crop_start:crop_end]
 
 
 def _backproject_2d_to_3d(
@@ -41,13 +42,22 @@ def _backproject_2d_to_3d(
         oversampling=1.0
     )
 
-    valid = weight_rec > 1e-3
-    data_rec[valid] /= weight_rec[valid]
+    # max operation with ones
+    weight_rec = torch.clamp(weight_rec, min=1.0)
+    data_rec /= weight_rec
 
     # 4. Convert reconstruction to real space
     real_reconstruction = torch.fft.irfftn(data_rec[0], dim=(-3, -2, -1), norm='forward')
+    real_reconstruction = torch.fft.ifftshift(real_reconstruction, dim=(-3, -2, -1))
+
+    # correct for convolution with linear interpolation kernel
+    grid = fftfreq_grid(
+        image_shape=real_reconstruction.shape, rfft=False, fftshift=True, norm=True,
+        device=real_reconstruction.device
+    )
+    real_reconstruction = real_reconstruction / torch.sinc(grid) ** 2
 
     # 5. ifftshift and crop to 0.5x size (original size from 2x oversampling)
-    result = _ifftshift_and_crop_3d(real_reconstruction, pad_factor)
+    result = _crop_3d(real_reconstruction, pad_factor)
 
     return result
