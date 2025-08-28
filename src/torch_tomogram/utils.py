@@ -1,6 +1,19 @@
 import torch
 import torch_projectors
 from torch_grid_utils import fftfreq_grid
+from functools import lru_cache
+
+@lru_cache(maxsize=2)
+def sinc2(shape, device):
+    grid = fftfreq_grid(
+        image_shape=shape,
+        rfft=False,
+        fftshift=True,
+        norm=True,
+        device=device
+    )
+    return torch.sinc(grid) ** 2
+
 
 # Helper function to crop 3D volumes
 def _crop_3d(real_tensor, oversampling_factor):
@@ -49,6 +62,9 @@ def _backproject_2d_to_3d(
     # 4. Convert reconstruction to real space
     real_reconstruction = torch.fft.irfftn(data_rec[0], dim=(-3, -2, -1), norm='forward')
     real_reconstruction = torch.fft.ifftshift(real_reconstruction, dim=(-3, -2, -1))
+
+    # sinc2 correction for linear interpolation kernel in Fourier space
+    real_reconstruction /= sinc2(real_reconstruction.shape, device=real_reconstruction.device)
 
     # 5. ifftshift and crop to 0.5x size (original size from 2x oversampling)
     result = _crop_3d(real_reconstruction, pad_factor)
