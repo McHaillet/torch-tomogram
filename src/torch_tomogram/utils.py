@@ -38,7 +38,7 @@ def _backproject_2d_to_3d(
         rotations,
         weights=weights,
         shifts=shifts,
-        interpolation='cubic',
+        interpolation='linear',
         oversampling=1.0
     )
 
