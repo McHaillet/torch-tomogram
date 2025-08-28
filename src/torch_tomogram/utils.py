@@ -38,7 +38,7 @@ def _backproject_2d_to_3d(
         rotations,
         weights=weights,
         shifts=shifts,
-        interpolation='linear',
+        interpolation='cubic',
         oversampling=1.0
     )
 
@@ -49,13 +49,6 @@ def _backproject_2d_to_3d(
     # 4. Convert reconstruction to real space
     real_reconstruction = torch.fft.irfftn(data_rec[0], dim=(-3, -2, -1), norm='forward')
     real_reconstruction = torch.fft.ifftshift(real_reconstruction, dim=(-3, -2, -1))
-
-    # correct for convolution with linear interpolation kernel
-    grid = fftfreq_grid(
-        image_shape=real_reconstruction.shape, rfft=False, fftshift=True, norm=True,
-        device=real_reconstruction.device
-    )
-    real_reconstruction = real_reconstruction / torch.sinc(grid) ** 2
 
     # 5. ifftshift and crop to 0.5x size (original size from 2x oversampling)
     result = _crop_3d(real_reconstruction, pad_factor)
