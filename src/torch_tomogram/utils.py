@@ -45,14 +45,15 @@ def _backproject_2d_to_3d(
     rotations = rotations.unsqueeze(0)  # add batch dimension
     shifts = torch.zeros(1, n_tilts, 2, dtype=torch.float32)
 
-    # 3. Backward project 2D->3D with oversampling=2.0
+    # 3. Backward project 2D->3D
     data_rec, weight_rec = torch_projectors.backproject_2d_to_3d_forw(
         fourier_projection,  # Add batch dimensions
         rotations,
         weights=weights,
         shifts=shifts,
         interpolation='linear',
-        oversampling=1.0
+        oversampling=1.0  # images are already oversampled upon extraction
+        # from tilt-series
     )
 
     # max operation with ones
