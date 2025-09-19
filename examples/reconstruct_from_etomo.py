@@ -1,9 +1,12 @@
 import etomofiles
 import mrcfile
 import numpy as np
+import torch
 from pathlib import Path
 from torch_tomogram import Tomogram
 
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Read etomo alignment data
 ETOMO_DIR = Path("/home/marten/data/datasets/apoferritin/TS_1/")
@@ -50,6 +53,7 @@ tilt_series = Tomogram(
     tilt_axis_angle=df.tilt_axis_angle,
     sample_translations=corrected_shifts.copy()
 )
-tomogram = tilt_series.reconstruct_tomogram((100, 480, 342), 128)
+tilt_series.to(device)
+tomogram = tilt_series.reconstruct_tomogram((100, 480, 342), 192).cpu()
 
 mrcfile.write(ETOMO_DIR / 'tt_rec.mrc', tomogram.numpy(), overwrite=True, voxel_size=10)

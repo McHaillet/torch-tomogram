@@ -31,19 +31,22 @@ def _backproject_2d_to_3d(
         rotations: torch.Tensor,
         pad_factor: int = 2
 ) -> torch.Tensor:
+    device = real_projections.device
     n_tilts = real_projections.shape[-3]
 
     # 1. fftshift and convert to Fourier space
     shifted_projection = torch.fft.fftshift(real_projections, dim=(-2, -1))
     fourier_projection = torch.fft.rfft2(shifted_projection, norm='forward')
     weights = torch.ones_like(
-        fourier_projection, dtype=torch.float32, device=fourier_projection.device
+        fourier_projection, dtype=torch.float32, device=device
     )
 
     # 2. Set up backprojection parameters (rotation matrix for 3D)
     rotations = torch.flip(rotations, dims=(-2, -1))  # zyx > xyz matrix
     rotations = rotations.unsqueeze(0)  # add batch dimension
-    shifts = torch.zeros(1, n_tilts, 2, dtype=torch.float32)
+    shifts = torch.zeros(
+        1, n_tilts, 2, dtype=torch.float32, device=device
+    )
 
     # 3. Backward project 2D->3D
     data_rec, weight_rec = torch_projectors.backproject_2d_to_3d_forw(
@@ -65,7 +68,7 @@ def _backproject_2d_to_3d(
     real_reconstruction = torch.fft.ifftshift(real_reconstruction, dim=(-3, -2, -1))
 
     # sinc2 correction for linear interpolation kernel in Fourier space
-    real_reconstruction /= sinc2(real_reconstruction.shape, device=real_reconstruction.device)
+    real_reconstruction /= sinc2(real_reconstruction.shape, device=device)
 
     # 5. ifftshift and crop to 0.5x size (original size from 2x oversampling)
     result = _crop_3d(real_reconstruction, pad_factor)
